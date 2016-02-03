@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="demo.mapper.RegionMapper">
+
+    <select id="getZip" parameterType="string" resultType="demo.domain.entity.Zip">
+        select
+            zpc_zip_code as zipCode,
+            zpc_latitude as latitude,
+            zpc_longitude as longitude
+        from names.zip_code
+        where zpc_zip_code = #{zipCode, jdbcType=VARCHAR}
+    </select>
+
+    <select id="getAllZips" parameterType="map" resultMap="AllZipsResultMap">
+        select distinct
+            z.zpc_zip_code as zipCode,
+            z.zpc_map as map,
+            z.zpc_latitude as latitude,
+            z.zpc_longitude as longitude,
+            round((sqrt((z.zpc_latitude-f.latitude)*(z.zpc_latitude-f.latitude)+(z.zpc_longitude-f.longitude)*(z.zpc_longitude-f.longitude)))*65, 4) as distance
+        from names.zip_code z,
+             names.cdd_franchise f
+        where f.franchise_id = #{franchiseId, jdbcType=VARCHAR}
+        and round((sqrt((z.zpc_latitude-f.latitude)*(z.zpc_latitude-f.latitude)+(z.zpc_longitude-f.longitude)*(z.zpc_longitude-f.longitude)))*65, 4) <![CDATA[ <= ]]> #{radius, jdbcType=NUMERIC}
+        order by distance
+    </select>
+
+    <resultMap id="AllZipsResultMap" type="demo.domain.entity.Zip">
+        <result property="zipCode" column="zipCode"/>
+        <result property="map" column="map" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result property="latitude" column="latitude" typeHandler="org.apache.ibatis.type.BigDecimalTypeHandler"/>
+        <result property="longitude" column="longitude" typeHandler="org.apache.ibatis.type.BigDecimalTypeHandler"/>
+    </resultMap>
+
+    <select id="getConflicts" parameterType="map" resultMap="ConflictsResultMap">
+        select
+            r.region_id,
+            r.region_make,
+            r.radius_mi,
+            r.latitude,
+            r.longitude,
+            zr.pin,
+            zc.zpc_zip_code,
+            zc.zpc_map,
+            zc.zpc_latitude,
+            zc.zpc_longitude
+        from names.dealer_pdp_region r,
+             names.dealer_pdp_zip_region zr,
+             names.zip_code zc
+        where r.region_make = #{make, jdbcType=VARCHAR}
+        and r.cdd_franchise_id is not null
+        and r.region_id = zr.region_id
+        and zr.zip_code = zc.zpc_zip_code
+        and zr.zip_code in
+            (
+                select distinct
+                    z.zpc_zip_code
+                from names.zip_code z,
+                     names.cdd_franchise f
+                where f.franchise_id = #{franchiseId, jdbcType=VARCHAR}
+                and round((sqrt((z.zpc_latitude-f.latitude)*(z.zpc_latitude-f.latitude)+(z.zpc_longitude-f.longitude)*(z.zpc_longitude-f.longitude)))*65, 4) <![CDATA[ <= ]]> #{radius, jdbcType=NUMERIC}
+            )
+        order by r.region_id,
+                 r.region_make,
+                 zr.zip_code
+    </select>
+
+    <resultMap id="ConflictsResultMap" type="demo.domain.Conflict">
+        <result property="region.regionId" column="region_id"/>
+        <result property="region.regionMake" column="region_make"/>
+        <result property="region.radius" column="radius_mi"/>
+        <result property="region.latitude" column="latitude"/>
+        <result property="region.longitude" column="longitude"/>
+        <result property="pinned" column="pin" typeHandler="demo.handler.PinnedTypeHandler"/>
+        <result property="zip.zipCode" column="zpc_zip_code"/>
+        <result property="zip.map" column="zpc_map" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result property="zip.latitude" column="zpc_latitude"/>
+        <result property="zip.longitude" column="zpc_longitude"/>
+    </resultMap>
+
+    <select id="getMaxRegionId" resultType="_int">
+        select
+            max(region_id)
+        from names.dealer_pdp_region
+    </select>
+
+    <select id="getRegionZip" parameterType="map" resultMap="RegionZipResultMap">
+        select
+            zr.region_id,
+            zr.zip_code,
+            zr.pin,
+            zr.distance_mi,
+            zr.drivetime_sec
+        from names.dealer_pdp_zip_region zr,
+             names.dealer_pdp_region r
+        where r.region_id = zr.region_id
+        and r.region_make = #{make, jdbcType=VARCHAR}
+        and zr.zip_code = #{zipCode, jdbcType=VARCHAR}
+    </select>
+
+    <resultMap id="RegionZipResultMap" type="demo.domain.RegionZip">
+        <result property="regionId" column="region_id"/>
+        <result property="zipCode" column="zip_code"/>
+        <result property="pinned" column="pin" typeHandler="demo.handler.PinnedTypeHandler"/>
+    </resultMap>
+
+    <delete id="deleteAllRegionZips" parameterType="_int">
+        delete from names.dealer_pdp_zip_region
+        where region_id = #{regionId, jdbcType=NUMERIC}
+    </delete>
+
+    <delete id="deleteRegionZip" parameterType="map">
+        delete from names.dealer_pdp_zip_region
+        where region_id = #{regionId, jdbcType=NUMERIC}
+        and zip_code = #{zipCode, jdbcType=VARCHAR}
+    </delete>
+
+    <insert id="insertRegionZip" parameterType="map">
+        insert into names.dealer_pdp_zip_region
+        (
+            region_id,
+            zip_code,
+            pin
+        )
+        values
+        (
+            #{regionId, jdbcType=NUMERIC},
+            #{zipCode, jdbcType=VARCHAR},
+            #{pinned, jdbcType=VARCHAR, typeHandler=demo.handler.PinnedTypeHandler}
+        )
+    </insert>
+
+    <insert id="insertRegion" parameterType="demo.domain.entity.Region">
+        insert into names.dealer_pdp_region
+        (
+            region_id,
+            region_code,
+            region_desc,
+            region_make,
+            region_map,
+            latitude,
+            longitude,
+            state,
+            cdd_franchise_id,
+            radius_mi,
+            insert_date,
+            update_date
+        )
+        values
+        (
+            #{regionId, jdbcType=NUMERIC},
+            #{regionCode, jdbcType=VARCHAR},
+            #{regionDescription, jdbcType=VARCHAR},
+            #{regionMake, jdbcType=VARCHAR},
+            #{map, jdbcType=VARCHAR},
+            #{latitude, jdbcType=NUMERIC},
+            #{longitude, jdbcType=NUMERIC},
+            #{state, jdbcType=VARCHAR},
+            #{franchiseId, jdbcType=NUMERIC},
+            #{radius, jdbcType=NUMERIC},
+            sysdate,
+            sysdate
+        )
+    </insert>
+
+    <update id="updateRegion" parameterType="demo.domain.entity.Region">
+        update names.dealer_pdp_region
+        set
+            region_code = #{regionCode, jdbcType=VARCHAR},
+            region_desc = #{regionDescription, jdbcType=VARCHAR},
+            latitude = #{latitude, jdbcType=NUMERIC},
+            longitude = #{longitude, jdbcType=NUMERIC},
+            radius_mi = #{radius, jdbcType=NUMERIC},
+            update_date = sysdate
+        where region_id = #{regionId, jdbcType=NUMERIC}
+    </update>
+
+    <select id="findFranchisesNameLike" parameterType="string" resultType="demo.domain.FranchiseResponse">
+        select
+            f.franchise_id as franchiseId,
+            f.franchise_name as franchiseName,
+            f.make as make
+        from names.cdd_franchise f
+        where f.franchise_name like #{term, jdbcType=VARCHAR}
+    </select>
+
+</mapper>

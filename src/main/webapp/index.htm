@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="Sat, 01 Dec 2001 00:00:00 GMT">
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { height: 100% }
+      .noscrollbar { line-height: 1.35; overflow: hidden; white-space: nowrap; }
+
+      .ui-autocomplete-loading { background: white url('images/ui-anim_basic_16x16.gif') right center no-repeat; }
+
+      .ui-dialog .ui-state-error { padding: .3em; }
+      .validate-tips { border: 1px solid transparent; padding: 0.3em; }
+      #show-zips-dialog { font-size: 80% }
+      #zips-dialog { font-size: 70% !important; }
+      #create-region-dialog { font-size: 70% !important; }
+      .ui-button { font-size: 70% !important; }
+      .ui-dialog-titlebar { font-size: 70% !important; }
+      .ui-dialog-buttonpane { font-size: 90% !important; }
+      .display-block { display:block; }
+      a.ui-corner-all { font-size: 70% !important; }
+      #message-dialog { font-size: 70% !important; }
+
+      .show_hide { display:none; }
+
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDwn0cJpeFxvGKwsC6GNY0LW8yOI8g3v7A&sensor=false"></script>
+
+    <title>Regions</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/themes/base/jquery.ui.base.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/themes/redmond/jquery-ui.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css"/>
+</head>
+<body>
+
+<table>
+    <tr>
+        <td valign="top">
+            <div>
+                <table id="grid"></table>
+                <div id="pager"></div>
+            </div>
+        </td>
+        <td id="map-cell" rowspan="2">
+            <div id="map-canvas"></div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <!--<button id="show-zips-dialog">Show all ZIPs near franchise</button>-->
+            <div>
+                <button id="show-create-region-dialog">Create or update region</button>
+                <button id="create-region-apply" style="display:none;">Apply</button>
+                <button id="create-region-cancel" style="display:none;">Cancel</button>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+<script src="js/lib/grid.locale-en.js"></script>
+<script src="js/lib/jquery.jqGrid.js"></script>
+<script src="js/lib/jquery.ui.autocomplete.js"></script>
+
+<script src="js/grid.js"></script>
+<script src="js/map.js"></script>
+<script src="js/xml.js"></script>
+<script src="js/zips.js"></script>
+<script src="js/regions.js"></script>
+
+<div id="zips-dialog" title="Show all ZIPs near franchise">
+    <p class="zips-validate-tips">All fields are required</p>
+    <form>
+        <fieldset>
+            <label for="zips-franchise-id" class="display-block">Franchise Id</label>
+            <input type="text" id="zips-franchise-id" class="text ui-widget-content ui-corner-all display-block">
+
+            <label for="zips-radius" class="display-block">Radius</label>
+            <select id="zips-radius" class="text ui-widget-content ui-corner-all display-block">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100" selected="selected">100</option>
+                <option value="250">250</option>
+                <option value="500">500</option>
+            </select>
+        </fieldset>
+    </form>
+</div>
+
+<div id="create-region-dialog" title="Create or update region">
+    <p class="create-region-validate-tips">All fields are required</p>
+    <form>
+        <fieldset>
+            <div class="ui-widget">
+                <label for="create-region-franchise-name" class="display-block">Franchise Name</label>
+                <input type="text" id="create-region-franchise-name" class="text ui-widget-content ui-corner-all display-block" style="width:350px;">
+                <input type="hidden" id="create-region-franchise-id" value="" />
+            </div>
+
+            <label for="create-region-radius" class="display-block">Radius</label>
+            <select id="create-region-radius" class="text ui-widget-content ui-corner-all display-block">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100" selected="selected">100</option>
+                <option value="250">250</option>
+                <option value="500">500</option>
+            </select>
+        </fieldset>
+    </form>
+</div>
+
+<div id="message-dialog" title="Information">
+    <span id="message-dialog-header"></span>
+    <span id="plus">[+]</span>
+    <div id="message-dialog-body" style="display:block;"></div>
+</div>
+
+</body>
+</html>

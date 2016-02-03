@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="unit" annotations="JDK" time-out="8000">
+    <test name="unit" verbose="10" annotations="JDK" time-out="2000">
+        <packages>
+            <package name="demo.domain"/>
+        </packages>
+    </test>
+</suite>

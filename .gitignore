@@ -1,5 +1,6 @@
-pom.xml
-/src/main/resources/log4j.xml
+.idea
+*.iml
+target
 /src/main/java/demo/ProductionDataSourceConfig.java
 /src/main/resources/db/AK
 /src/main/resources/db/CA
